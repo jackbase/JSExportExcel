@@ -1,0 +1,2235 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <link href="css/site.css" rel="stylesheet" type="text/css" />
+    <script src="js/jquery-1.8.2.min.js" type="text/javascript"></script>
+    <title>JSExportExcel</title>
+    <script>
+        var idTmr;
+        function ExportExcel() {
+            try {
+                var xls = new ActiveXObject("Excel.Application");
+            } catch (e) {
+                alert(e);
+                return false;
+            }
+
+            xls.visible = false;
+            var xlBook = xls.Workbooks.Add;
+            var xlsheet = xlBook.Worksheets(1);
+
+            var tableObj = $("div.our-jira table.jira-table");
+            var subtableObj = $("div.our-jira table.reprot-subJIRA");
+            var x = 1;
+            var y = 1;
+            var rowObj;
+            var cellslength = 0;
+
+            for (var i = 0; i < tableObj.length; i++) {
+                y = 1;
+                rowObj = $(subtableObj[i]).find('tr.our-jira');
+
+                if (rowObj.length > 0) {
+                    xls.Range(xls.Cells(x, y), xls.Cells(x + rowObj.length - 1, y)).Borders.LineStyle = 1;
+                    xls.Range(xls.Cells(x, y), xls.Cells(x + rowObj.length - 1, y)).MergeCells = true;
+                    xlsheet.Cells(x, y).Value = tableObj[i].rows[0].cells[0].innerText;
+                    xlsheet.Cells(x, y).HorizontalAlignment = 3;
+                    xlsheet.Cells(x, y).VerticalAlignment = 2;
+                    xlsheet.Cells(x, y).Font.Bold = true;
+
+                    try {
+                        xlsheet.Cells(x, y).Interior.color = parseInt($(tableObj[i].rows[0].cells[0]).getHexBackgroundColor());
+                    } catch (e) {
+                        xlsheet.Cells(x, y).Interior.ColorIndex = 0;
+                    }
+
+                    for (var m = 0; m < rowObj.length; m++) {
+                        y = 2;
+                        cellslength = rowObj[m].cells.length;
+                        for (var n = 0; n < cellslength; n++) {
+                            xlsheet.Cells(x, y).Value = rowObj[m].cells[n].innerText;
+                            xlsheet.Cells(x, y).Borders.LineStyle = 1;
+
+                            xlsheet.Cells(x, y).VerticalAlignment = 2;
+                            xlsheet.Cells(x, y).Font.Bold = n == 0 ? true : false;
+                            xlsheet.Cells(x, y).HorizontalAlignment = n == rowObj[m].cells.length - 1 ? 2 : 3;
+                            try {
+                                xlsheet.Cells(x, y).Interior.color = parseInt($(rowObj[m].cells[n]).getHexBackgroundColor());
+                            } catch (e) {
+                                xlsheet.Cells(x, y).Interior.ColorIndex = 0;
+                            }
+                            y++;
+                        }
+                        x++;
+                    }
+                }
+                else {
+                    xlsheet.Cells(x, y).Borders.LineStyle = 1;
+                    xlsheet.Cells(x, y).Value = tableObj[i].rows[0].cells[0].innerText;
+                    xlsheet.Cells(x, y).HorizontalAlignment = 3;
+                    xlsheet.Cells(x, y).VerticalAlignment = 2;
+                    xlsheet.Cells(x, y).Font.Bold = true;
+
+                    try {
+                        xlsheet.Cells(x, y).Interior.color = parseInt($(tableObj[i].rows[0].cells[0]).getHexBackgroundColor());
+                    } catch (e) {
+                        xlsheet.Cells(x, y).Interior.ColorIndex = 0;
+                    }
+                    y = 2;
+                    xls.Range(xls.Cells(x, y), xls.Cells(x, y + cellslength - 1)).Borders.LineStyle = 1;
+                    xls.Range(xls.Cells(x, y), xls.Cells(x, y + cellslength - 1)).MergeCells = true;
+                    x++;
+                }
+            }
+            xlsheet.Rows("1:" + x).RowHeight = 28;
+            xlsheet.Columns.AutoFit;
+
+            try {
+                var fileName = xls.Application.GetSaveAsFilename("our-jiras.xlsx", "Excel Spreadsheets (*.xlsx), *.xlsx");
+            } catch (e) {
+                print("Nested catch caught " + e);
+            } finally {
+                xlBook.SaveAs(fileName);
+    
+                xlBook.Close(savechanges = false);
+                xls.Quit();
+                xls = null;
+                idTmr = window.setInterval("Cleanup();", 1);
+            }
+            return;
+        }
+
+        function Cleanup() {
+            window.clearInterval(idTmr);
+            CollectGarbage();
+        }
+    
+        $.fn.getHexBackgroundColor = function () {
+            var color = $(this).css('background-color');
+            if (color.substr(0, 1) === '#') {
+                return '0x' + color.substring(1);
+            }
+            var digits = /(.*?)rgb\((\d+), (\d+), (\d+)\)/.exec(color);
+    
+            var red = parseInt(digits[2]);
+            var green = parseInt(digits[3]);
+            var blue = parseInt(digits[4]);
+    
+            var rgb = blue | (green << 8) | (red << 16);
+            return digits[1] + '0x' + rgb.toString(16);
+        }
+</script>
+</head>
+<body>
+    <div id="JIRReport" style="padding-left: 10px">
+        <!-- ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-4071</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-4992</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7429</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7430</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Tech task to address defect
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7431</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">John Paciulli</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA testing task to verify defect is addressed
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7450</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7439</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-3970</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7060</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev-Task
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7061</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Thomas Bueno</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Task
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7062</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7085</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Eugene Woo</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;UAT task - EPPS team
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-4142</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-4353</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding"></td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Create Mockups
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-4632</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Casey Frick</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Update mockups
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7040</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Cherry Zhang</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Master Commitment - Support on TPO website
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7043</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7135</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tammy Liu</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Write Test Case
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7203</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Integrate with SDK
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7205</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Implement code to support Delivery Type on Lock request form 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7241</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Implement changes to display delivery type on loan details
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7281</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">67%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Changes in Product and Pricing UI to display Channel, Underwritten By and Delivery Type Sending Delivery Type  to EPPS service
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7329</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;If commitment authority is not enabled, the Delivery Type should be not displayed in Summary page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7335</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Delivery Type should not show Individual Mandatory when Mandatory- Individual delivery type is not checked in Commitment tab.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7336</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Some UI issue exist in P&amp;P and lock request page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7413</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Cannot auto create CT by manual confirm loan.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-7424</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;The restriction of commitments only apply on lock request page. It also need to apply on submit &amp; lock request page when commitment authority is enabled.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-7437</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;SDK issue about Lock Information when commitment authority is enabled.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-110</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5744</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Casey Frick</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;WebCenter Admin borrower management 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5748</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Jeff Bell</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Pre-release notes
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6718</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Amy Yang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA WebCenter User Pipeline - admin side view into accounts 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6719</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV  WebCenter User Pipeline - admin side view into accounts 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6720</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6721</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7111</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Lianyin Zhang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Changes in Loan Center web service
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7185</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">80%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEv-Exact Name &amp;Email Failure on Active email link
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7186</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">83%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Click Unlock button, unlock fail
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7187</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Set Security as  Enhanced Level,enter 5 time wrong password login consumersite,login succusful but Authentication failed
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7194</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Lianyin Zhang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">83%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Set Site Security as Basic Level, it's unnecessary to show Activated address.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7195</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;when the borrower email is locked, Login Attempts 's value issue
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7199</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Create a new account but not activated, using the temporary password can log into the site successfully.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7209</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">94%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Set "Allow webmasters to manage borrower accounts" as NO, the "Manager Borrower Accounts" link is showed on Toolbox page.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7222</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yanxiang Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Change level from advanced to Stander or Basic,answers value need to hide
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-6863</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6973</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Review/Sign-Off Fees - Show fees from new funding worksheet
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6974</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Review/Sign-Off Fees - Show fees from new funding worksheet
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7063</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Thomas Bueno</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Task
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7352</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Verify Core Encompass API to confirm all the data is available 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7353</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Thomas Bueno</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Review API
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-5336</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5765</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Jeff Bell</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Tech Pub - Need email template
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6744</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Send a notification to Accounting when a WebCenter site is created/deleted
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6745</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Zhigui Shi</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - Create class and method to send this email
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6746</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6747</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6798</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Send a notification to Accounting when a WebCenter site is created/deleted
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-6754</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6755</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Test Task - QA only -- Verify that Encompass is pushing TPO document updates to the TPO documents cache -- ref WEB-5095
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6756</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - QA only -- Verify that Encompass is pushing TPO document updates to the TPO documents cache -- ref WEB-5095
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6757</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Technical Task - QA only -- Verify that Encompass is pushing TPO document updates to the TPO documents cache -- ref WEB-5095
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-6785</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6786</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Test Task - Be able to retrieve TPO documents by GUIDs
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6787</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Be able to retrieve TPO documents by GUIDs
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-6788</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Technical Task - Be able to retrieve TPO documents by GUIDs
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7368</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Be able to retrieve TPO documents by GUIDs
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6781</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6782</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Cathy Wei</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Test Task - Show document sizes on documents of TPO document page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6783</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Show document sizes on documents of TPO document page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6784</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Jinbiao Wang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Technical Task - Show document sizes on documents of TPO document page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7077</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Show document sizes on documents of TPO document page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-4291</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7092</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Lancy Shen</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA -- View Purchase Advice and Auto Lock
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7120</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Auto Lock: missing data in lock confirm details page.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7121</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Auto-Lock\Manual-Lock can't work when change settings between select auto-lock and unselect auto lock.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7129</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Lancy Shen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Write TestCase
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-5983</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5984</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Sanbo Huang</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev-Lo or lp login the site to create loan ,Edit loan officer and loan processor in loan summary tab,neither of them is current log in user,should be not save succesfully
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5985</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Thomas Bueno</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Lo or lp login the site to create loan ,Edit loan officer and loan processor in loan summary tab,neither of them is current log in user,should be not save succesfully
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6417</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW - Lo or lp login the site to create loan ,Edit loan officer and loan processor in loan summary tab,neither of them is current log in user,should be not save succesfully
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6418</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW - Lo or lp login the site to create loan ,Edit loan officer and loan processor in loan summary tab,neither of them is current log in user,should be not save succesfully
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6817</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6818</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Cherry Zhang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Test Task - QA ONLY -- Verify ENC-16265 -- Change calculation 'COPYTPOCUSTOMFIELDSTOLOANFIELDS' to take external org ID
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6819</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - QA ONLY -- Verify ENC-16265 -- Change calculation 'COPYTPOCUSTOMFIELDSTOLOANFIELDS' to take external org ID
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6820</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Technical Task - QA ONLY -- Verify ENC-16265 -- Change calculation 'COPYTPOCUSTOMFIELDSTOLOANFIELDS' to take external org ID
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-4294</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7358</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7369</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ming Zhao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Remove the borrower name from consent 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7370</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Remove the borrower name from consent 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7371</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Remove the borrower name from consent 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7372</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Remove the borrower name from consent 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7434</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7435</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Shengtao Yang</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV-Modify the consent status from accept/decline to take no action failed
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7436</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Vivi Wang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Modify the consent status from accept/decline to take no action failed
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7452</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Modify the consent status from accept/decline to take no action failed
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7453</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Modify the consent status from accept/decline to take no action failed
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7312</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7361</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Loan with Co-Borrower and single borrower_All the pages with messages does not match the UI pages.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7364</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Girija Meda</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Loan with Co-Borrower and single borrower_All the pages with messages does not match the UI pages.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7365</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review -  Loan with Co-Borrower and single borrower_All the pages with messages does not match the UI pages.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7045</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7071</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">75%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - TPO-Import Additional Data with TPO removes data from "Loan Program" field. 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7072</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7073</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7074</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - TPO-Import Additional Data with TPO removes data from "Loan Program" field. 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7313</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7414</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Jinbo Li</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV TPO/PML - First Time homebuyer
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7415</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7416</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7417</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA  TPO/PML - First Time homebuyer
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7320</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7376</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liangfeng Wu</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - TPO Import Additional Data changes Loan Channel
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7377</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - TPO Import Additional Data changes Loan Channel
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7378</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - TPO Import Additional Data changes Loan Channel
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7379</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - TPO Import Additional Data changes Loan Channel
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7396</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7442</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Genyan Cao</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV Need to encrypt full application data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7443</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7444</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7445</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Need to encrypt full application data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7397</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7446</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA Full app, short app, and Spanish app pages have to refresh to home page after timeout
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7447</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Jinbo Li</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV  Full app, short app, and Spanish app pages have to refresh to home page after timeout
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7448</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7449</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-7191</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7192</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV-Send request failed and throw soap Exception
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7193</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Vivi Wang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Send request failed and throw soap Exception
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7401</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7402</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6930</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6933</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Submit seller loan don’t meet condition failed, then do credit report success shouldn’t return buyer criteria prompts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6934</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Submit seller loan don’t meet condition failed, then do credit report success shouldn’t return buyer criteria prompts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6963</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Vivi Wang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Submit seller loan don’t meet condition failed, then do credit report success shouldn’t return buyer criteria prompts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6964</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6965</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV-Order credit action shoud  check condtion after update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6966</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Vivi Wang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Order credit action shoud  check condtion after update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7139</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Order credit action shoud check condtion after update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7140</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Order credit action shoud check condtion after update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6967</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6968</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV-Issues when using Import Additional Data by DO to update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6969</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tammy Liu</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Issues when using Import Additional Data by DO to update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7141</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Issues when using Import Additional Data by DO to update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7142</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Issues when using Import Additional Data by DO to update loan data
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7373</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7374</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tracy Kong</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Set loan criteria or license policy as "Don't allow loan creation", Submission Type is disappeared after clicking Next from no loan pricing.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7375</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">75%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV-Set loan criteria or license policy as "Don't allow loan creation", Submission Type is disappeared after clicking Next from no loan pricing.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7404</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7405</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7425</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7426</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ming Zhao</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - Issue when selecting Loan Officer from no loan pricing
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7427</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tracy Kong</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Issue when selecting Loan Officer from no loan pricing
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7454</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review -  Issue when selecting Loan Officer from no loan pricing
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7455</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review -  Issue when selecting Loan Officer from no loan pricing
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6083</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-6208</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Simi Thilakan</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV getting duplicate loans and invalid company name error for TPO loans with LoanSifter has Pricing vendor
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6209</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6210</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Girija Meda</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA getting duplicate loans and invalid company name error for TPO loans with LoanSifter has Pricing vendor
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6539</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6162</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6163</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Thomas Bueno</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - "LoanNumber" Not Saved to TPOWC_Loan_Tracking Table When User Uploads Loan From Encompass
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6164</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - "LoanNumber" Not Saved to TPOWC_Loan_Tracking Table When User Uploads Loan From Encompass
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6364</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW - "LoanNumber" Not Saved to TPOWC_Loan_Tracking Table When User Uploads Loan From Encompass
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6365</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW - "LoanNumber" Not Saved to TPOWC_Loan_Tracking Table When User Uploads Loan From Encompass
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6682</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6714</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ming Zhao</td>
+                                <td width="120" style="text-align: center" class="Gray">Verify</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV TPO Webcenter pulling DU
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6715</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6716</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6717</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA TPO Webcenter pulling DU
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-6623</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6624</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Shengtao Yang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - Upload a file which is larger than 10 MB in admin site will return server error.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6625</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tracy Kong</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Upload a file which is larger than 10 MB in admin site will return server error.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6855</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Upload a file which is larger than 10 MB in admin site will return server error.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6856</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Upload a file which is larger than 10 MB in admin site will return server error.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-6593</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6594</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Girija Meda</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-TPO/Loansifter ,on IE 11 user navigates to Loan Sifter login page instead on PPE page.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-6595</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">69%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev-TPO/Loansifter ,on IE 11 user navigates to Loan Sifter login page instead on PPE page.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6687</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW - TPO/Loansifter ,on IE 11 user navigates to Loan Sifter login page instead on PPE page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6688</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW - TPO/Loansifter ,on IE 11 user navigates to Loan Sifter login page instead on PPE page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-5857</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5858</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - The Record of last updated does not display the user name after create a contact in TPO website.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5859</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tracy Kong</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">75%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA – The Record of last updated does not display the user name after create a contact in TPO website.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5951</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW The Record of last updated does not display the user name after create a contact in TPO website.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-5952</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW The Record of last updated does not display the user name after create a contact in TPO website.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="other-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-5224</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-5229</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Lancy Shen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-After remove site in company,the contact under this company login to TPO webcenter has issues.
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class="Blocked"><strong class="ng-binding">WEB-6922</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="Blocked">
+                                    <strong class="ng-binding">WEB-6951</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">67%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev  - Do EPPS success, there is no seller -buyer prompts; do EPPS failed, underwritten by shouldn’t change from seller to buyer
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-6952</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Do EPPS success, there is no seller -buyer prompts; do EPPS failed, underwritten by shouldn’t change from seller to buyer
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7119</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Do EPPS success, there is no seller -buyer prompts; do EPPS failed, underwritten by shouldn’t change from seller to buyer
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7095</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7096</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Lianyin Zhang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV-Error message will be displayed when submit full app if time out
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7097</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tammy Liu</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-Error message will be displayed when submit full app if time out
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7138</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Error message will be displayed when submit full app if time out
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7399</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7122</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7123</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Genyan Cao</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev-The No radio btn shoud be keep checked on Declarations tab during ful application
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7124</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Vivi Wang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA-The No radio btn shoud be keep checked on Declarations tab during ful application
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7136</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - The No radio btn shoud be keep checked on Declarations tab during ful application
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7137</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - The No radio btn shoud be keep checked on Declarations tab during ful application
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7083</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7151</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Zhigui Shi</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV - Incorrect Warning Message Displayed When User Navigates Away From "Full Application" Flow on "Thank You" Page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7152</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA = Incorrect Warning Message Displayed When User Navigates Away From "Full Application" Flow on "Thank You" Page
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7362</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7363</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7127</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7143</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Zhigui Shi</td>
+                                <td width="120" style="text-align: center" class="Yellow">In Progress</td>
+                                <td width="100" style="text-align: center" class="Yellow">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Manager Role no longer available for TPO Contacts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7144</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class="">0%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Manager Role no longer available for TPO Contacts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7146</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Ross Tomita</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Manager Role no longer available for TPO Contacts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7148</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Steve Batey</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA - Manager Role no longer available for TPO Contacts
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7314</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7319</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Jingchao Zhou</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CDW QA - Regression - Webcenter Emails
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7380</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;Dev - Remove "Company Name in Emails" setting from admin site
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7381</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray"></td>
+                                <td class="ng-binding">&nbsp;&nbsp;Code Review - Remove "Company Name in Emails" setting from admin site
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask --><div ng-repeat="item in JIRAs.issues | MainTask" class="our-jira">
+            <table cellspacing="0" cellspan="0" border="1" width="80%" class="jira-table">
+                <tbody><tr>
+                    <td width="100" style="text-align: center" class=""><strong class="ng-binding">WEB-7395</strong>
+                    </td>
+                    <td>
+                        <table class="reprot-subJIRA">
+                            <tbody><!-- ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="our-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7406</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Liping Fang</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;DEV TPO Custom Pages Display Odd PDF Size 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7407</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Yemol Yuan</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7408</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tsu-Wang Chen</td>
+                                <td width="120" style="text-align: center" class="">Open</td>
+                                <td width="100" style="text-align: center" class=""></td>
+                                <td class="ng-binding">&nbsp;&nbsp;CODE REVIEW
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks --><tr ng-repeat="subtask in item.fields.subtasks" class="other-jira">
+                                <td width="100" style="text-align: center" class="">
+                                    <strong class="ng-binding">WEB-7409</strong>
+                                </td>
+                                <td width="120" style="text-align: center" class="ng-binding">Tracy Kong</td>
+                                <td width="120" style="text-align: center" class="Gray">Closed</td>
+                                <td width="100" style="text-align: center" class="Gray">100%</td>
+                                <td class="ng-binding">&nbsp;&nbsp;QA TPO Custom Pages Display Odd PDF Size 
+                                </td>
+                            </tr><!-- end ngRepeat: subtask in item.fields.subtasks -->
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+        </div><!-- end ngRepeat: item in JIRAs.issues | MainTask -->
+    </div>
+
+    <br />
+    <input type="button" name="out_excel" onclick="ExportExcel();" value="export to excel" />
+</body>
+</html>
